@@ -17,7 +17,7 @@ class DBN:
     def build_model(self):
         n_h=[]
         n_v = [self.n_nodes]
-        n_hPercentage = [80, 60, 20]
+        n_hPercentage = [60, 20, 10]
         for i in n_hPercentage:
             nhid = int(np.round(self.n_nodes*(i/100)))
             n_h.append(nhid)
@@ -31,6 +31,10 @@ class DBN:
         self.lr_layer = LogisticReg(n_h[2], self.max_epoch, self.alpha)
         print(n_v, n_h)
 		
+    def sigmoid(self, z):
+        return 1/(1+np.exp(-z))
+
+
     def pre_train(self, X):
         self.visible_layer.append(X)
         for rbm in self.rbm_layers:
@@ -40,22 +44,32 @@ class DBN:
             self.hidden_layer.append(X)
             self.visible_layer.append(X)
         self.visible_layer.pop()
+        print(self.params)
         return X
 
     def sgd(self, visible, hidden, y):
         for i in range(3):
-            gradient = np.dot(visible[i].T, (hidden[i]-y).T)/y.shape[0]
+            hidden[i] = self.rbm_layers[0].sigmoid(np.dot(visible[i],self.params[i]))
+            #print("\nhidden",i, self.hidden_layer[i])
+            gradient = np.dot(visible[i].T, (hidden[i]-y.T))/y.shape[1]
             self.params[i] -= self.alpha*gradient
         return self
 
     def fine_tune(self, h, y):
-        cost = np.sum(y * np.log(h) + (1-y) * np.log(1-h))/-y.shape[0]
-        print("cost:", cost)
         self.sgd(self.visible_layer, self.hidden_layer, y)
+        cost = np.sum(y.T * np.log(h) + (1-y.T) * np.log(1-h))/-y.shape[1]
+        print("cost:", cost)
 
     def fit(self, X, y):
         #tahap pretraining
         self.build_model()
-        pretrained = self.pre_train(X)
+        self.pre_train(X)
         for epoch in range(self.max_epoch):
-            self.fine_tune(pretrained, y)
+            print("\nFine tuning iteration:",epoch)
+            self.fine_tune(self.hidden_layer[2], y)
+    
+    def predict(self, X):
+        for i in range(3):
+            X = np.dot(X, self.params[i])
+            X = self.sigmoid(X)
+        return X
