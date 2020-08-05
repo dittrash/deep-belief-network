@@ -46,7 +46,7 @@ class RBM:
         vP += self.vb
         vP = self.sigmoid(vP)
         rng = np.random.rand(dp, vP.shape[1])
-        return (rng < vP)
+        return (rng < vP), vP
 
     def pos_grad(self, X, hPos):
         #menghitung graden positif
@@ -64,8 +64,8 @@ class RBM:
         for i in range(self.epoch):
             hPpos = self.activation(X)
             hPos = self.sample_hidden(hPpos, dp)
-            vNeg = self.sample_visible(hPos, dp)
-            hPneg = self.activation(vNeg)
+            vNeg, vPneg = self.sample_visible(hPos, dp)
+            hPneg = self.activation(vPneg)
             pos_grad = self.pos_grad(X, hPos)
             neg_grad = self.neg_grad(vNeg, hPneg)
             #update weight dgn CD
@@ -76,8 +76,8 @@ class RBM:
             self.hb += self.alpha*(hPpos.sum(axis=0)-hPneg.sum(axis=0))
             self.vb += self.alpha*(X.sum(axis=0)-vNeg.sum(axis=0))
             #error
-            error = np.mean(np.square(X-vNeg))
-            print("RBM iteration", i)
-            print("\nerror: ", error)
+            error = np.mean(np.square(vPneg-X))
+            print("\nRBM iteration", i)
+            print("error: ", error)
         final_w = self.weight
         return hPpos, final_w
