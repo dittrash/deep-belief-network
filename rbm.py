@@ -2,7 +2,24 @@
 import numpy as np
 
 class RBM:
-#inisialisasi variabel
+    '''
+        Restricted Boltzmann Machine.
+        Dito Aldi Soekarno Putra 1151500054
+        Informatika Institut Teknologi Indonesia
+
+        Referensi:
+        [1] S. Deb, “Restricted Boltzmann Machine Tutorial: Deep Learning Concepts,” Edureka!, 21-May-2020. [Online].
+            Available: https://www.edureka.co/blog/restricted-boltzmann-machine-tutorial/. [Accessed: 06-Aug-2020].
+
+        [2] “Restricted Boltzmann Machines (RBM)¶,” DeepLearning 0.1 documentation. [Online].
+            Available: http://deeplearning.net/tutorial/rbm.html. [Accessed: 06-Aug-2020].
+
+        [3] A. Sharma, “Restricted Boltzmann Machines - Simplified,” Medium, 06-Dec-2018. [Online].
+            Available: https://towardsdatascience.com/restricted-boltzmann-machines-simplified-eab1e5878976. [Accessed: 06-Aug-2020].
+        
+        [4] M. Nayak, “An Intuitive Introduction Of Restricted Boltzmann Machine (RBM),” Medium, 18-Apr-2019. [Online].
+            Available: https://medium.com/datadriveninvestor/an-intuitive-introduction-of-restricted-boltzmann-machine-rbm-14f4382a0dbb. [Accessed: 06-Aug-2020].
+    '''
     def __init__(self,
         epoch,
         n_visible,
@@ -23,13 +40,13 @@ class RBM:
     def sigmoid(self, z):
         return 1/(1+np.exp(-z))
 
-    #latih
-    def activation(self, X):
+    #fungsi aktivasi
+    def activation(self, w, b, X):
         #menghitung aktivasi P(h=1|v)
         #dan P(v=1|h)
         #return hPpos, hPneg 
-        z = np.dot(X, self.weight)
-        z += self.hb
+        z = np.dot(X, w)
+        z += b
         return self.sigmoid(z)
 
     def sample_hidden(self, hP, dp):
@@ -62,10 +79,10 @@ class RBM:
         #fungsi latih dan update weight & bias
         dp = X.shape[0] #jumlah datapoint
         for i in range(self.epoch):
-            hPpos = self.activation(X)
+            hPpos = self.activation(self.weight, self.hb, X)
             hPos = self.sample_hidden(hPpos, dp)
             vNeg, vPneg = self.sample_visible(hPos, dp)
-            hPneg = self.activation(vPneg)
+            hPneg = self.activation(self.weight, self.hb, vPneg)
             pos_grad = self.pos_grad(X, hPos)
             neg_grad = self.neg_grad(vNeg, hPneg)
             #update weight dgn CD
@@ -80,4 +97,5 @@ class RBM:
             print("\nRBM iteration", i)
             print("error: ", error)
         final_w = self.weight
-        return hPpos, final_w
+        final_hb = self.hb
+        return hPpos, final_w, final_hb

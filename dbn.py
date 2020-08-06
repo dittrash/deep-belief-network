@@ -1,8 +1,29 @@
 #impor library yang dibutuhkan
 from rbm import RBM
-from logreg import LogisticReg
+from logisticRegression import logReg
 import numpy as np
 class DBN:
+    '''
+        Deep Belief Network
+        Dito Aldi Soekarno Putra 1151500054
+        Informatika Institut Teknologi Indonesia
+
+        Deep Belief Network dibangun dengan 3 RBM sebagai tahap pre-training, supervised gradient decent
+        sebagai tahap fine-tuning dan logistic regression sebagai tahap klasifikasi
+
+        Referensi:
+        [1] “Deep Belief Networks¶,” Deep Belief Networks - DeepLearning 0.1 documentation. [Online].
+            Available: http://deeplearning.net/tutorial/DBN.html. [Accessed: 06-Aug-2020].
+
+        [2] C. Nicholson, “Deep-Belief Networks,” Pathmind. [Online].
+            Available: https://pathmind.com/wiki/deep-belief-network. [Accessed: 06-Aug-2020].
+
+        [3] I. C. Labs, “Deep Belief Networks - all you need to know,” Medium, 08-Aug-2018. [Online].
+            Available: https://medium.com/@icecreamlabs/deep-belief-networks-all-you-need-to-know-68aa9a71cc53. [Accessed: 06-Aug-2020].
+        
+        [4] C. Li, Y. Wang, X. Zhang, H. Gao, Y. Yang, and J. Wang,
+            “Deep Belief Network for Spectral–Spatial Classification of Hyperspectral Remote Sensor Data,” Sensors, vol. 19, no. 1, p. 204, 2019.
+    '''
     def __init__(self, n_nodes, rbm_epoch, max_epoch, alpha):
         self.n_nodes = n_nodes
         self.rbm_epoch = rbm_epoch
@@ -13,6 +34,14 @@ class DBN:
         self.hidden_layer = []
         self.visible_layer = []
         self.lr_layer = None
+        self.rbm_inference = []
+        self.bias_node = None
+
+    #fungsi transform untuk mencari hidden layer data inputan
+    def transform(self, X):
+        for i in range(3):
+            X = self.rbm_layers[0].activation(self.params[i], self.rbm_inference[i], X)
+        return X
 
     def build_model(self):
         n_h=[]
@@ -23,53 +52,62 @@ class DBN:
             n_h.append(nhid)
             n_v.append(nhid)
         n_v.pop()
-        
+        self.bias_node = 0
         #membangun model
+        #layer RBM
         for n in range(3):
             rbm_layer = RBM(epoch=self.rbm_epoch, n_visible = n_v[n], n_hidden = n_h[n], alpha=self.alpha)
             self.rbm_layers.append(rbm_layer)
-        self.lr_layer = LogisticReg(n_h[2], self.max_epoch, self.alpha)
-        print(n_v, n_h)
-		
-    def sigmoid(self, z):
-        return 1/(1+np.exp(-z))
+        #layer logistic regression
+        self.lr_layer = logReg(self.max_epoch, self.alpha)
+        #print(n_v, n_h)
 
-
+    #fungsi pre-training dengan 3 RBM
     def pre_train(self, X):
         self.visible_layer.append(X)
         for rbm in self.rbm_layers:
             print("X", X.shape[0])
-            X, w = rbm.fit(X)
+            X, w, rbm_bias = rbm.fit(X)
             self.params.append(w)
+            self.rbm_inference.append(rbm_bias)
             self.hidden_layer.append(X)
             self.visible_layer.append(X)
         self.visible_layer.pop()
-        print(self.params)
+        #print("rbm bias:", self.rbm_inference)
         return X
 
-    def sgd(self, visible, hidden, y):
-        for i in range(3):
-            hidden[i] = self.rbm_layers[0].sigmoid(np.dot(visible[i],self.params[i]))
-            #print("\nhidden",i, self.hidden_layer[i])
-            gradient = np.dot(visible[i].T, (hidden[i]-y.T))/y.shape[1]
-            self.params[i] -= self.alpha*gradient
-        return self
+    #fungsi fine-tuning dengan supervised gradient decent dan klasifikasi dengan logistic regression
+    def fine_tune(self, y, X_test, y_test):
+        for i in range (3):
+            infereces_reshaped = self.rbm_inference[i].reshape(self.rbm_inference[i].shape[0],1)
+            #optimasi parameter dan bias
+            params, inferences, hiddens, grads = self.lr_layer.optimize(i,self.params[i].T, infereces_reshaped, self.visible_layer[i], y)
+            print("new w shape: ", self.params[i].shape)
+            self.params[i] = params.T
+            self.rbm_inference[i] = inferences.reshape(inferences.shape[0])
+            self.hidden_layer[i] = hiddens.T
+            #memasukkan hidden dan visible layer baru
+            if i < 2:
+                self.visible_layer[i+1] = self.hidden_layer[i]
+        #pelatihan klasifikasi dengan logistic regression
+        lr_w, self.bias_node = self.lr_layer.fit(self.hidden_layer[2], y, X_test, y_test)
+        self.params.append(lr_w)
 
-    def fine_tune(self, h, y):
-        self.sgd(self.visible_layer, self.hidden_layer, y)
-        cost = np.sum(y.T * np.log(h) + (1-y.T) * np.log(1-h))/-y.shape[1]
-        print("cost:", cost)
-
+    #fungsi latih
     def fit(self, X, y):
-        #tahap pretraining
+        #penyusun model
         self.build_model()
+        #tahap pre-training
         self.pre_train(X)
-        for epoch in range(self.max_epoch):
-            print("\nFine tuning iteration:",epoch)
-            self.fine_tune(self.hidden_layer[2], y)
+        #tahap fine-tuning
+        self.fine_tune(y, self.hidden_layer[2], y)
     
+    #fungsi prediksi kelas
     def predict(self, X):
-        for i in range(3):
-            X = np.dot(X, self.params[i])
-            X = self.sigmoid(X)
-        return X
+        #pencari hidden layer dari data input
+        transformed = self.transform(X)
+        #transformed = transformed.reshape(transformed.shape[0], 1)
+        #probabilitas kelas
+        prediction = self.lr_layer.predict(self.params[3], self.bias_node, transformed)
+        
+        return prediction
