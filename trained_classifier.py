@@ -5,7 +5,7 @@ from skimage.io import imread_collection, imshow, imread
 from skimage.transform import resize
 from skimage.color import rgb2gray
 from skimage import io
-imgtest = imread('images/test/1.jpg')
+imgtest = imread('images/test/bocil-ganggu.jpg')
 imgtest = rgb2gray(imgtest)
 imgtest = resize(imgtest,(77,65),mode='constant', anti_aliasing=False)
 imgtest = imgtest.flatten('C')
@@ -18,6 +18,7 @@ if prob >= 0.5:
     class_predicted = 1
 elif prob < 0.5:
     class_predicted = 0
+print("probability: ", prob)
 print("Class predicted: ", class_predicted)
 #probability
 #prob =  model.predict_proba(imgtest)[:,1]
