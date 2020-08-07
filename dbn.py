@@ -7,10 +7,7 @@ class DBN:
         Deep Belief Network
         Dito Aldi Soekarno Putra 1151500054
         Informatika Institut Teknologi Indonesia
-
-        Deep Belief Network dibangun dengan 3 RBM sebagai tahap pre-training, supervised gradient decent
-        sebagai tahap fine-tuning dan logistic regression sebagai tahap klasifikasi
-
+        
         Referensi:
         [1] “Deep Belief Networks¶,” Deep Belief Networks - DeepLearning 0.1 documentation. [Online].
             Available: http://deeplearning.net/tutorial/DBN.html. [Accessed: 06-Aug-2020].
