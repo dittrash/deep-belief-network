@@ -3,6 +3,7 @@ from rbm import RBM
 from logisticRegression import logReg
 from numba import jit
 import numpy as np
+import time
 class DBN:
     '''
         Deep Belief Network
@@ -34,6 +35,8 @@ class DBN:
         self.lr_layer = None
         self.rbm_inference = []
         self.bias_node = None
+        self.start_pretrain_time = 0
+        self.start_finetune_time = 0
 
     #fungsi transform untuk mencari hidden layer data inputan
     def transform(self, X):
@@ -62,7 +65,7 @@ class DBN:
 
     #fungsi pre-training dengan 3 RBM
     def pre_train(self, X):
-        start_pretrain_time = time.time()
+        self.start_pretrain_time = time.time()
         self.visible_layer.append(X)
         for rbm in self.rbm_layers:
             print("X", X.shape[0])
@@ -77,12 +80,9 @@ class DBN:
 
     #fungsi fine-tuning dengan supervised gradient decent dan klasifikasi dengan logistic regression
     def fine_tune(self, y, X_test, y_test):
-        start_finetune_time = time.time()
+        self.start_finetune_time = time.time()
         for i in range (3):
-            print("lr: ", self.alpha)
-            if i == 1:
-                self.alpha *= 10
-                print("lr: ", self.alpha)
+            print("lr: ", self.alpha)  
             infereces_reshaped = self.rbm_inference[i].reshape(self.rbm_inference[i].shape[0],1)
             #optimasi parameter dan bias
             params, inferences, hiddens, grads = self.lr_layer.optimize(i,self.params[i].T, infereces_reshaped, self.visible_layer[i], y)
@@ -93,6 +93,7 @@ class DBN:
             #memasukkan hidden dan visible layer baru
             if i < 2:
                 self.visible_layer[i+1] = self.hidden_layer[i]
+            self.alpha *= 10
         #pelatihan klasifikasi dengan logistic regression
         lr_w, self.bias_node = self.lr_layer.fit(self.hidden_layer[2], y, X_test, y_test)
         self.params.append(lr_w)
@@ -106,9 +107,9 @@ class DBN:
         self.pre_train(X)
         #tahap fine-tuning
         self.fine_tune(y, self.hidden_layer[2], y)
-        print("\nTotal training time:" + str(time.time() - start_total_time) + " seconds")
-        print(" - pre-training:" + str(time.time() - start_pretrain_time) + " seconds")
-        print(" - fine-tuning:" + str(time.time() - start_finetune_time) + " seconds")
+        print("\nTotal training time:" + str((time.time() - start_total_time)/60) + " mins")
+        print(" - pre-training:" + str((time.time() - self.start_pretrain_time)/60) + " mins")
+        print(" - fine-tuning:" + str((time.time() - self.start_finetune_time)/60) + " mins")
     
     #fungsi prediksi kelas
     def predict(self, X):

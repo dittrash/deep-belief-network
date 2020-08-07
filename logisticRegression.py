@@ -33,7 +33,6 @@ class logReg:
     def cost(self, m, Y, A):
         cost = (-1/m) * np.sum(Y * np.log(A) + (1-Y) * np.log(1-A))
         cost = np.squeeze(cost)
-        print ("Cost: ", cost)
         return cost
 
     #fungsi propagasi forward dan backward
@@ -56,15 +55,16 @@ class logReg:
         else:
             message = iter+1
         for i in range(self.epoch):
-            print("\nFine tuning layer number:", message)
-            print("iteration:",i)
             grads, A = self.propagate(w, b, X, Y) #hitung aktivasi dan gradien
             dw = grads["dw"]
             db = grads["db"]
             #optimasi weight dan bias dengan gradient decent
             w = w - self.alpha * dw.T #weight baru
             b = b - self.alpha * db #bias baru
-            self.cost(Y.shape[1],Y,A) #hitung cost
+            cost = self.cost(Y.shape[1],Y,A) #hitung cost
+            print("\nFine tuning layer number:", message)
+            print("iteration:",i)
+            print ("Cost: ", cost)
         params = w
         bias = b
         grads = {"dw": dw,
