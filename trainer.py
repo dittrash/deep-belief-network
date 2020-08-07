@@ -4,7 +4,7 @@ from skimage.io import imread_collection, imshow
 from skimage.transform import resize
 import numpy as np
 import pickle
-model = DBN(n_nodes=5005,rbm_epoch=100,max_epoch=1000, alpha=0.01)
+model = DBN(n_nodes=5005,rbm_epoch=2,max_epoch=2, alpha=0.01)
 imgs = imread_collection('images/train/*.jpg')
 print("Imported", len(imgs), "images")
 print("The first one is",len(imgs[0]), "pixels tall, and",
