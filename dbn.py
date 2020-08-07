@@ -62,6 +62,7 @@ class DBN:
 
     #fungsi pre-training dengan 3 RBM
     def pre_train(self, X):
+        start_pretrain_time = time.time()
         self.visible_layer.append(X)
         for rbm in self.rbm_layers:
             print("X", X.shape[0])
@@ -76,6 +77,7 @@ class DBN:
 
     #fungsi fine-tuning dengan supervised gradient decent dan klasifikasi dengan logistic regression
     def fine_tune(self, y, X_test, y_test):
+        start_finetune_time = time.time()
         for i in range (3):
             print("lr: ", self.alpha)
             if i == 1:
@@ -97,12 +99,16 @@ class DBN:
 
     #fungsi latih
     def fit(self, X, y):
+        start_total_time = time.time()
         #penyusun model
         self.build_model()
         #tahap pre-training
         self.pre_train(X)
         #tahap fine-tuning
         self.fine_tune(y, self.hidden_layer[2], y)
+        print("\nTotal training time:" + str(time.time() - start_total_time) + " seconds")
+        print(" - pre-training:" + str(time.time() - start_pretrain_time) + " seconds")
+        print(" - fine-tuning:" + str(time.time() - start_finetune_time) + " seconds")
     
     #fungsi prediksi kelas
     def predict(self, X):
