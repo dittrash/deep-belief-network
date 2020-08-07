@@ -1,6 +1,7 @@
 #impor library yang dibutuhkan
 from rbm import RBM
 from logisticRegression import logReg
+from numba import jit
 import numpy as np
 class DBN:
     '''
@@ -53,7 +54,7 @@ class DBN:
         #membangun model
         #layer RBM
         for n in range(3):
-            rbm_layer = RBM(epoch=self.rbm_epoch, n_visible = n_v[n], n_hidden = n_h[n], alpha=self.alpha)
+            rbm_layer = RBM(epoch=self.rbm_epoch, n_visible = n_v[n], n_hidden = n_h[n], alpha=0.01)
             self.rbm_layers.append(rbm_layer)
         #layer logistic regression
         self.lr_layer = logReg(self.max_epoch, self.alpha)
@@ -79,7 +80,7 @@ class DBN:
             infereces_reshaped = self.rbm_inference[i].reshape(self.rbm_inference[i].shape[0],1)
             #optimasi parameter dan bias
             params, inferences, hiddens, grads = self.lr_layer.optimize(i,self.params[i].T, infereces_reshaped, self.visible_layer[i], y)
-            print("new w shape: ", self.params[i].shape)
+            #print("new w shape: ", self.params[i].shape)
             self.params[i] = params.T
             self.rbm_inference[i] = inferences.reshape(inferences.shape[0])
             self.hidden_layer[i] = hiddens.T
