@@ -1,7 +1,6 @@
 #impor library yang dibutuhkan
 from rbm import RBM
 from logisticRegression import logReg
-from numba import jit
 import numpy as np
 import time
 class DBN:
@@ -93,7 +92,7 @@ class DBN:
             #memasukkan hidden dan visible layer baru
             if i < 2:
                 self.visible_layer[i+1] = self.hidden_layer[i]
-            self.alpha *= 10
+            #self.alpha *= 10
         #pelatihan klasifikasi dengan logistic regression
         lr_w, self.bias_node = self.lr_layer.fit(self.hidden_layer[2], y, X_test, y_test)
         self.params.append(lr_w)

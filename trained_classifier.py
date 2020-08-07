@@ -5,12 +5,12 @@ from skimage.io import imread_collection, imshow, imread
 from skimage.transform import resize
 from skimage.color import rgb2gray
 from skimage import io
-imgtest = imread('images/test/bocil-ganggu.jpg')
+imgtest = imread('images/test/haha.jpeg')
 imgtest = rgb2gray(imgtest)
 imgtest = resize(imgtest,(77,65),mode='constant', anti_aliasing=False)
 imgtest = imgtest.flatten('C')
 imgtest = imgtest.reshape(1,-1)
-with open('7aug2020e100_1000a0-01.pkl', 'rb') as file:
+with open('8aug2020p250n250e100_2000a0-001_0-01_0-1.pkl', 'rb') as file:
     model = pickle.load(file)
 #class prediction
 prob = model.predict(imgtest)
