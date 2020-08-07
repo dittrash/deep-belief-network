@@ -7,7 +7,7 @@ class DBN:
         Deep Belief Network
         Dito Aldi Soekarno Putra 1151500054
         Informatika Institut Teknologi Indonesia
-        
+
         Referensi:
         [1] “Deep Belief Networks¶,” Deep Belief Networks - DeepLearning 0.1 documentation. [Online].
             Available: http://deeplearning.net/tutorial/DBN.html. [Accessed: 06-Aug-2020].
@@ -76,6 +76,10 @@ class DBN:
     #fungsi fine-tuning dengan supervised gradient decent dan klasifikasi dengan logistic regression
     def fine_tune(self, y, X_test, y_test):
         for i in range (3):
+            print("lr: ", self.alpha)
+            if i == 1:
+                self.alpha *= 10
+                print("lr: ", self.alpha)
             infereces_reshaped = self.rbm_inference[i].reshape(self.rbm_inference[i].shape[0],1)
             #optimasi parameter dan bias
             params, inferences, hiddens, grads = self.lr_layer.optimize(i,self.params[i].T, infereces_reshaped, self.visible_layer[i], y)
