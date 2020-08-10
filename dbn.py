@@ -1,7 +1,6 @@
 #impor library yang dibutuhkan
 from rbm import RBM
-from logisticRegression import logReg
-from numba import jit
+from logisticRegressionSGD import logReg
 import numpy as np
 import time
 class DBN:
@@ -82,18 +81,17 @@ class DBN:
     def fine_tune(self, y, X_test, y_test):
         self.start_finetune_time = time.time()
         for i in range (3):
-            print("lr: ", self.alpha)  
-            infereces_reshaped = self.rbm_inference[i].reshape(self.rbm_inference[i].shape[0],1)
+            infereces_reshaped = self.rbm_inference[i].reshape(1,self.rbm_inference[i].shape[0])
             #optimasi parameter dan bias
-            params, inferences, hiddens, grads = self.lr_layer.optimize(i,self.params[i].T, infereces_reshaped, self.visible_layer[i], y)
+            params, inferences, hiddens, grads = self.lr_layer.optimize(i, self.params[i], infereces_reshaped, self.visible_layer[i], y)
             #print("new w shape: ", self.params[i].shape)
-            self.params[i] = params.T
-            self.rbm_inference[i] = inferences.reshape(inferences.shape[0])
-            self.hidden_layer[i] = hiddens.T
+            self.params[i] = params
+            self.rbm_inference[i] = inferences.reshape(inferences.shape[1])
+            self.hidden_layer[i] = hiddens
             #memasukkan hidden dan visible layer baru
             if i < 2:
-                self.visible_layer[i+1] = self.hidden_layer[i]
-            self.alpha *= 10
+                self.visible_layer[i+1] = hiddens
+        self.alpha = 0.5
         #pelatihan klasifikasi dengan logistic regression
         lr_w, self.bias_node = self.lr_layer.fit(self.hidden_layer[2], y, X_test, y_test)
         self.params.append(lr_w)
