@@ -91,7 +91,6 @@ class DBN:
             #memasukkan hidden dan visible layer baru
             if i < 2:
                 self.visible_layer[i+1] = hiddens
-        self.alpha = 0.5
         #pelatihan klasifikasi dengan logistic regression
         lr_w, self.bias_node = self.lr_layer.fit(self.hidden_layer[2], y, X_test, y_test)
         self.params.append(lr_w)

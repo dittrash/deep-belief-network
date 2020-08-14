@@ -54,6 +54,8 @@ class logReg:
             message = iter+1
         for i in range(self.epoch):
             #randomize input
+            print("\nFine tuning layer number:", message)
+            print("iteration:",i)
             h = np.zeros(shape=(X.shape[0], w.shape[1]))
             datacost = 0
             indices = np.arange(Y.T.shape[0])
@@ -62,6 +64,7 @@ class logReg:
             yRand = Y.T[indices]
             for j in range(len(X)):
                 data_index = indices[j]
+                print("data processed: ", f'{j}\r', end="")
                 x_reshaped = xRand[j].reshape(1,len(xRand[j]))
                 #print("xRand shape", x_reshaped.shape)
                 y_reshaped = yRand[j].reshape(1,1)
@@ -73,10 +76,8 @@ class logReg:
                 w = w - self.alpha * dw #weight baru
                 b = b - self.alpha * db #bias baru
                 datacost += self.cost(yRand[j],A) #hitung cost
-            h[data_index] = A.reshape(A.shape[1])
+                h[data_index] = A.reshape(A.shape[1])
                 #print(datacost)
-            print("\nFine tuning layer number:", message)
-            print("iteration:",i)
             print ("Cost: ", datacost/Y.shape[1])
         params = w
         bias = b
@@ -100,7 +101,7 @@ class logReg:
         #inisialisasi parameter dan bias
         w, b = self.initialize_with_zeros(X_train.shape[1])
         # optimasi dengan gradient descent
-        parameters, bias, A, grads = self.optimize("final", w, b, X_train, Y_train)
+        parameters, bias, h, grads = self.optimize("final", w, b, X_train, Y_train)
         w = parameters
         b = bias
         #prediksi training dan testing
