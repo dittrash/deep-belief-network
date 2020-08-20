@@ -36,6 +36,7 @@ class DBN:
         self.rbm_inference = []
         self.bias_node = None
         self.start_pretrain_time = 0
+        self.stop_pretrain_time = 0
         self.start_finetune_time = 0
 
     #fungsi transform untuk mencari hidden layer data inputan
@@ -75,6 +76,7 @@ class DBN:
             self.hidden_layer.append(X)
             self.visible_layer.append(X)
         self.visible_layer.pop()
+        self.stop_pretrain_time = time.time()
         #print("rbm bias:", self.rbm_inference)
         return X
 
@@ -93,21 +95,22 @@ class DBN:
             if i < 2:
                 self.visible_layer[i+1] = hiddens
         #pelatihan klasifikasi dengan logistic regression
-        lr_w, self.bias_node = self.lr_layer.fit(self.hidden_layer[2], y, X_test, y_test)
+        x_test = self.transform(X_test)
+        lr_w, self.bias_node = self.lr_layer.fit(self.hidden_layer[2], y, x_test, y_test)
         self.params.append(lr_w)
 
     #fungsi latih
-    def fit(self, X, y):
+    def fit(self, X, y, x_test, y_test):
         start_total_time = time.time()
         #penyusun model
         self.build_model()
         #tahap pre-training
         self.pre_train(X)
         #tahap fine-tuning
-        self.fine_tune(y, self.hidden_layer[2], y)
-        print("\nTotal training time:" + str((time.time() - start_total_time)/60) + " mins")
-        print(" - pre-training:" + str((time.time() - self.start_pretrain_time)/60) + " mins")
-        print(" - fine-tuning:" + str((time.time() - self.start_finetune_time)/60) + " mins")
+        self.fine_tune(y, x_test, y_test)
+        print("\nTotal training time:" + str((time.time() - start_total_time)/3600) + " hrs")
+        print(" - pre-training:" + str((self.stop_pretrain_time - self.start_pretrain_time)/3600) + " hrs")
+        print(" - fine-tuning:" + str((time.time() - self.start_finetune_time)/3600) + " hrs")
     
     #fungsi prediksi kelas
     def predict(self, X):
