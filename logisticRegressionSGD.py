@@ -15,9 +15,10 @@ class logReg:
         [3] S. Swaminathan, “Logistic Regression - Detailed Overview,” Medium, 15-Mar-2019. [Online].
             Available: https://towardsdatascience.com/logistic-regression-detailed-overview-46c4da4303bc. [Accessed: 06-Aug-2020].
     '''
-    def __init__(self, epoch = 2000, alpha = 0.01):
+    def __init__(self, epoch = 2000, alpha = 0.01, threshold=0.011):
         self.epoch = epoch
         self.alpha = alpha
+        self.threshold = threshold
     
     #inisialisasi weight dan bias
     def initialize_with_zeros(self, dim):
@@ -55,7 +56,7 @@ class logReg:
         for i in range(self.epoch):
             #randomize input
             print("\nFine tuning layer number:", message)
-            print("iteration:",i)
+            print("iteration:",i+1)
             h = np.zeros(shape=(X.shape[0], w.shape[1]))
             datacost = 0
             indices = np.arange(Y.T.shape[0])
@@ -78,7 +79,10 @@ class logReg:
                 datacost += self.cost(yRand[j],A) #hitung cost
                 h[data_index] = A.reshape(A.shape[1])
                 #print(datacost)
-            print ("Cost: ", datacost/Y.shape[1])
+            avg_cost = datacost/Y.shape[1]
+            print ("Cost: ", avg_cost)
+            if avg_cost <= self.threshold:
+                break
         params = w
         bias = b
         grads = {"dw": dw,

@@ -22,12 +22,13 @@ class DBN:
         [4] C. Li, Y. Wang, X. Zhang, H. Gao, Y. Yang, and J. Wang,
             “Deep Belief Network for Spectral–Spatial Classification of Hyperspectral Remote Sensor Data,” Sensors, vol. 19, no. 1, p. 204, 2019.
     '''
-    def __init__(self, n_nodes, rbm_epoch, max_epoch, alpha):
+    def __init__(self, n_nodes, rbm_epoch, max_epoch, alpha, threshold):
         self.n_nodes = n_nodes
         self.rbm_epoch = rbm_epoch
         self.rbm_layers = []
         self.max_epoch = max_epoch
         self.alpha = alpha
+        self.threshold = threshold
         self.params = []
         self.hidden_layer = []
         self.visible_layer = []
@@ -46,7 +47,7 @@ class DBN:
     def build_model(self):
         n_h=[]
         n_v = [self.n_nodes]
-        n_hPercentage = [60, 20, 10]
+        n_hPercentage = [80, 60, 40]
         for i in n_hPercentage:
             nhid = int(np.round(self.n_nodes*(i/100)))
             n_h.append(nhid)
@@ -59,7 +60,7 @@ class DBN:
             rbm_layer = RBM(epoch=self.rbm_epoch, n_visible = n_v[n], n_hidden = n_h[n], alpha=0.01)
             self.rbm_layers.append(rbm_layer)
         #layer logistic regression
-        self.lr_layer = logReg(self.max_epoch, self.alpha)
+        self.lr_layer = logReg(self.max_epoch, self.alpha, self.threshold)
         #print(n_v, n_h)
 
     #fungsi pre-training dengan 3 RBM
