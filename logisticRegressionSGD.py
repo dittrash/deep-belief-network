@@ -17,8 +17,10 @@ class logReg:
     '''
     def __init__(self, epoch = 2000, alpha = 0.01, threshold=0.011):
         self.epoch = epoch
+        self.lr_epoch = epoch
         self.alpha = alpha
         self.threshold = threshold
+        self.total_lr_epoch = epoch
     
     #inisialisasi weight dan bias
     def initialize_with_zeros(self, dim):
@@ -49,14 +51,11 @@ class logReg:
     
     #fungsi optimasi
     def optimize(self, iter, w, b, X, Y):
+        stopped_at = 0
         if iter == "final":
             message = "final"
-        else:
-            message = iter+1
         for i in range(self.epoch):
             #randomize input
-            print("\nFine tuning layer number:", message)
-            print("iteration:",i+1)
             h = np.zeros(shape=(X.shape[0], w.shape[1]))
             datacost = 0
             indices = np.arange(Y.T.shape[0])
@@ -80,14 +79,19 @@ class logReg:
                 h[data_index] = A.reshape(A.shape[1])
                 #print(datacost)
             avg_cost = datacost/Y.shape[1]
-            print ("Cost: ", avg_cost)
-            if avg_cost <= self.threshold:
-                break
+            if iter == "final":
+                print("LR epoch:", message)
+                print("iteration:",i+1)
+                print ("Cost: ", avg_cost)
+                print("\n")
+                if avg_cost <= self.threshold:
+                    self.total_lr_epoch = i
+                    break
         params = w
         bias = b
         grads = {"dw": dw,
                 "db": db}
-        return params, bias, h, grads
+        return params, bias, h, grads, avg_cost
 
     #fungsi prediksi
     def predict(self, w, b, X):
@@ -105,15 +109,16 @@ class logReg:
         #inisialisasi parameter dan bias
         w, b = self.initialize_with_zeros(X_train.shape[1])
         # optimasi dengan gradient descent
-        parameters, bias, h, grads = self.optimize("final", w, b, X_train, Y_train)
+        parameters, bias, h, grads, cost = self.optimize("final", w, b, X_train, Y_train)
         w = parameters
         b = bias
         #prediksi training dan testing
         Y_prediction_test = self.predict(w, b, X_test)
         Y_prediction_train = self.predict(w, b, X_train)
         #akurasi
-        print("train accuracy: {} %".format(100 - np.mean(np.abs(Y_prediction_train - Y_train)) * 100))
-        print("test accuracy: {} %".format(100 - np.mean(np.abs(Y_prediction_test - Y_test)) * 100))
+        print("\nNumber of LR epoch:", self.total_lr_epoch)
+        print(" - train accuracy: {} %".format(100 - np.mean(np.abs(Y_prediction_train - Y_train)) * 100))
+        print(" - test accuracy: {} %".format(100 - np.mean(np.abs(Y_prediction_test - Y_test)) * 100))
         #detail hasil training
         d = {
             "Y_prediction_test": Y_prediction_test, 

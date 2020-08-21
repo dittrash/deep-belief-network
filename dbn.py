@@ -38,6 +38,7 @@ class DBN:
         self.start_pretrain_time = 0
         self.stop_pretrain_time = 0
         self.start_finetune_time = 0
+        self.total_ft_epoch = max_epoch
 
     #fungsi transform untuk mencari hidden layer data inputan
     def transform(self, X):
@@ -60,6 +61,7 @@ class DBN:
         for n in range(3):
             rbm_layer = RBM(epoch=self.rbm_epoch, n_visible = n_v[n], n_hidden = n_h[n], alpha=0.01)
             self.rbm_layers.append(rbm_layer)
+        self.fine_tuner = logReg(1, self.alpha, self.threshold)
         #layer logistic regression
         self.lr_layer = logReg(self.max_epoch, self.alpha, self.threshold)
         #print(n_v, n_h)
@@ -83,19 +85,30 @@ class DBN:
     #fungsi fine-tuning dengan supervised gradient decent dan klasifikasi dengan logistic regression
     def fine_tune(self, y, X_test, y_test):
         self.start_finetune_time = time.time()
-        for i in range (3):
-            infereces_reshaped = self.rbm_inference[i].reshape(1,self.rbm_inference[i].shape[0])
-            #optimasi parameter dan bias
-            params, inferences, hiddens, grads = self.lr_layer.optimize(i, self.params[i], infereces_reshaped, self.visible_layer[i], y)
-            #print("new w shape: ", self.params[i].shape)
-            self.params[i] = params
-            self.rbm_inference[i] = inferences.reshape(inferences.shape[1])
-            self.hidden_layer[i] = hiddens
-            #memasukkan hidden dan visible layer baru
-            if i < 2:
-                self.visible_layer[i+1] = hiddens
+        print("start fine-tuning step\n")
+        for e in range(self.max_epoch):
+            print("\nFin-tuning iteration number: ", e)
+            avg_cost = 0
+            for i in range (3):
+                infereces_reshaped = self.rbm_inference[i].reshape(1,self.rbm_inference[i].shape[0])
+                #optimasi parameter dan bias
+                params, inferences, hiddens, grads, cost = self.fine_tuner.optimize(i, self.params[i], infereces_reshaped, self.visible_layer[i], y)
+                #print("new w shape: ", self.params[i].shape)
+                self.params[i] = params
+                self.rbm_inference[i] = inferences.reshape(inferences.shape[1])
+                self.hidden_layer[i] = hiddens
+                #memasukkan hidden dan visible layer baru
+                avg_cost += cost
+                if i < 2:
+                    self.visible_layer[i+1] = hiddens
+            avg_cost = avg_cost/3
+            print("cost: ", avg_cost)
+            if avg_cost <= self.threshold:
+                self.total_ft_epoch = e
+                break
         #pelatihan klasifikasi dengan logistic regression
         x_test = self.transform(X_test)
+        print("\nstart training classification\n")
         lr_w, self.bias_node = self.lr_layer.fit(self.hidden_layer[2], y, x_test, y_test)
         self.params.append(lr_w)
 
@@ -108,6 +121,8 @@ class DBN:
         self.pre_train(X)
         #tahap fine-tuning
         self.fine_tune(y, x_test, y_test)
+        print("\nNumber of RBM epoch: ", self.rbm_epoch)
+        print("Number of fine-tuning epoch: ", self.total_ft_epoch)
         print("\nTotal training time:" + str((time.time() - start_total_time)/3600) + " hrs")
         print(" - pre-training:" + str((self.stop_pretrain_time - self.start_pretrain_time)/3600) + " hrs")
         print(" - fine-tuning:" + str((time.time() - self.start_finetune_time)/3600) + " hrs")

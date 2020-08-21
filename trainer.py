@@ -4,9 +4,9 @@ from skimage.io import imread_collection, imshow
 from skimage.transform import resize
 import numpy as np
 import pickle
-model = DBN(n_nodes=5005,rbm_epoch=120,max_epoch=2000, alpha=0.01, threshold=0.011)
+model = DBN(n_nodes=5005,rbm_epoch=120,max_epoch=5000, alpha=0.01, threshold=0.011)
 
-imgs = imread_collection('images/train/*.jpg')
+imgs = imread_collection('images/small/*.jpg')
 imgstest = imread_collection('images/test/*.jpg')
 print("Imported", len(imgs), "images")
 print("The first one is",len(imgs[0]), "pixels tall, and",
@@ -29,9 +29,9 @@ x_test = np.array([[0.2157, 0.1255, 0.4039, 1.0, 0.0876, 0.2550],
                 [0.1886, 0.9529, 0.0824, 0.0980, 1.0, 0.3529]])
 '''
 y = []
-for i in range(180):
+for i in range(5):
      y.append(1)
-for i in range(120):
+for i in range(5):
      y.append(0)
 y = np.array([y])
 
@@ -44,8 +44,9 @@ y_test = np.array([y_test])
 '''
 y = np.array([[0,1,0,1]])
 y_test = np.array([[0,1]])
+model.fit(X, y, x_test, y_test)
 '''
 model.fit(np.array(imgsarr), y, np.array(imgsarrtest), y_test)
 print(model.predict(np.array([imgsarr[1]])))
-filename = '20aug2020p180n120e120_2000t0-011a0-01-SGD.pkl'
+filename = '21aug2020p5n5e120_5000t0-011a0-01-SGD.pkl'
 pickle.dump(model, open(filename, 'wb'))
