@@ -49,13 +49,13 @@ class DBN:
     def build_model(self):
         n_h=[]
         n_v = [self.n_nodes]
-        n_hPercentage = [80, 60, 40]
+        n_hPercentage = [60, 30, 10]
         for i in n_hPercentage:
             nhid = int(np.round(self.n_nodes*(i/100)))
             n_h.append(nhid)
             n_v.append(nhid)
         n_v.pop()
-        self.bias_node = 0
+        self.bias_node = 1
         #membangun model
         #layer RBM
         for n in range(3):
@@ -78,6 +78,8 @@ class DBN:
             self.hidden_layer.append(X)
             self.visible_layer.append(X)
         self.visible_layer.pop()
+        w_class = np.asarray(np.random.normal(0, 0.01,(self.hidden_layer[2].shape[1],1)))
+        self.params.append(w_class)
         self.stop_pretrain_time = time.time()
         #print("rbm bias:", self.rbm_inference)
         return X
@@ -89,28 +91,44 @@ class DBN:
         for e in range(self.max_epoch):
             print("\nFin-tuning iteration number: ", e)
             avg_cost = 0
-            for i in range (3):
-                infereces_reshaped = self.rbm_inference[i].reshape(1,self.rbm_inference[i].shape[0])
+            for i in range (4):
                 #optimasi parameter dan bias
-                params, inferences, hiddens, grads, cost = self.fine_tuner.optimize(i, self.params[i], infereces_reshaped, self.visible_layer[i], y)
+                if i < 3:
+                    infereces_reshaped = self.rbm_inference[i].reshape(1,self.rbm_inference[i].shape[0])
+                    bias = infereces_reshaped
+                    visible = self.visible_layer[i]
+                else:
+                    bias = self.bias_node
+                    visible = self.hidden_layer[2]
+                params, inferences, hiddens, grads, cost = self.fine_tuner.optimize(i, self.params[i], bias, visible, y)
                 #print("new w shape: ", self.params[i].shape)
                 self.params[i] = params
-                self.rbm_inference[i] = inferences.reshape(inferences.shape[1])
-                self.hidden_layer[i] = hiddens
+                if i < 3:
+                    self.rbm_inference[i] = inferences.reshape(inferences.shape[1])
+                    self.hidden_layer[i] = hiddens
+                else:
+                    self.bias_node = inferences
                 #memasukkan hidden dan visible layer baru
-                avg_cost += cost
                 if i < 2:
                     self.visible_layer[i+1] = hiddens
-            avg_cost = avg_cost/3
+            avg_cost = cost
             print("cost: ", avg_cost)
             if avg_cost <= self.threshold:
                 self.total_ft_epoch = e
                 break
+        Y_prediction_test = self.predict(X_test)
+        Y_prediction_train = self.predict(self.visible_layer[0])
+        train_acc = np.sqrt(np.mean(np.square(Y_prediction_test-y)))
+        test_acc = np.sqrt(np.mean(np.square(Y_prediction_train-y_test)))
+        print("\ntrain accuracy: ", train_acc)
+        print("test accuracy: ", test_acc)
         #pelatihan klasifikasi dengan logistic regression
-        x_test = self.transform(X_test)
+        '''
+        
         print("\nstart training classification\n")
         lr_w, self.bias_node = self.lr_layer.fit(self.hidden_layer[2], y, x_test, y_test)
         self.params.append(lr_w)
+        '''
 
     #fungsi latih
     def fit(self, X, y, x_test, y_test):
